@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emergency Health Blog</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* All your existing CSS styles remain the same */
+    #createPostModal .modal-content {
+      width: 500px;
+      max-width: 90%;
+      padding: 40px;
+      border-radius: 25px;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+      text-align: center;
+    }
+    #createPostModal input,
+    #createPostModal textarea {
+      width: 95%;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    #createPostModal #submit-post-btn {
+      background: linear-gradient(135deg, #28a745, #20c997);
+      color: #fff;
+      padding: 15px 25px;
+      font-size: 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    #createPostModal #submit-post-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+
+    .posts-header {
+      width: 100%;
+      padding: 30px 20px 20px;
+      background: #f0f2f5;
+      text-align: center;
+      display: none; /* Hidden by default */
+    }
+
+    .posts-header.visible {
+      display: block;
+    }
+
+    .posts-header h2 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .sorting-options {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .sort-btn {
+      background: linear-gradient(135deg, #6f42c1, #a567ff);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .sort-btn.active {
+      background: linear-gradient(135deg, #5a2dab, #8a4dff);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .sort-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    #posts-container {
+      width: 100%;
+      padding: 20px;
+      background: #f0f2f5;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 25px;
+      max-width: 1400px;
+      margin: 0 auto;
+      display: none; /* Hidden by default */
+    }
+
+    #posts-container.visible {
+      display: grid;
+    }
+
+    /* MINT GREEN POST CARDS */
+    .post-card {
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(135deg, #98FF98, #A7FFA7, #C6F6C6);
+      color: #2c5530;
+      padding: 25px;
+      border-radius: 15px;
+      transition: transform 0.3s, box-shadow 0.3s;
+      box-shadow: 0 4px 15px rgba(152, 255, 152, 0.3);
+      height: 100%;
+      min-height: 250px;
+      position: relative;
+    }
+
+    .post-card.highlight {
+      animation: highlightPost 2s ease-in-out;
+      border: 3px solid #ffcc00;
+      box-shadow: 0 0 20px rgba(255, 204, 0, 0.5);
+    }
+
+    @keyframes highlightPost {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .post-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 15px 30px rgba(152, 255, 152, 0.4);
+    }
+
+    .post-card h3 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 15px;
+      text-shadow: 1px 1px 4px rgba(44, 85, 48, 0.2);
+      line-height: 1.3;
+      color: #1e4a24;
+    }
+
+    .post-card p {
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 15px;
+      flex-grow: 1;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      color: #2c5530;
+    }
+
+    .post-card small {
+      font-size: 14px;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+
+    .post-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 15px;
+      font-size: 14px;
+      opacity: 0.9;
+      border-top: 1px solid rgba(44, 85, 48, 0.3);
+      padding-top: 15px;
+      color: #1e4a24;
+    }
+
+    .post-author {
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.3);
+      padding: 5px 12px;
+      border-radius: 20px;
+      color: #1e4a24;
+    }
+
+    .post-date {
+      font-style: italic;
+      color: #1e4a24;
+    }
+
+    .view-more-container {
+      width: 100%;
+      text-align: center;
+      padding: 30px 20px;
+      background: #f0f2f5;
+      display: none; /* Hidden by default */
+    }
+
+    .view-more-container.visible {
+      display: block;
+    }
+
+    .view-more-btn {
+      background: linear-gradient(135deg, #28a745, #20c997);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .view-more-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+      background: linear-gradient(135deg, #218838, #1e7e34);
+    }
+
+    .view-more-btn.hidden {
+      display: none;
+    }
+
+    .login-message {
+      text-align: center;
+      padding: 50px 20px;
+      background: #f0f2f5;
+      display: none;
+    }
+
+    .login-message.visible {
+      display: block;
+    }
+
+    .login-message h2 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 28px;
+    }
+
+    .login-message p {
+      color: #666;
+      font-size: 18px;
+      margin-bottom: 30px;
+    }
+
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      width: 400px;
+      max-width: 90%;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+
+    /* Feedback slider styles */
+    .feedback-slider-section {
+      padding: 40px 20px;
+      background: #f8f9fa;
+      text-align: center;
+    }
+
+    .feedback-slider-container {
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feedback-slider {
+      display: flex;
+      transition: transform 0.3s ease;
+    }
+
+    .feedback-slide {
+      min-width: 100%;
+      padding: 20px;
+    }
+
+    .feedback-item {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .slider-controls {
+      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .slider-btn {
+      background: linear-gradient(135deg, #6f42c1, #a567ff);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .slider-dots {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .slider-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #ccc;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .slider-dot.active {
+      background: #6f42c1;
+    }
+
+    /* Search highlight */
+    .search-highlight {
+      background-color: #ffeb3b;
+      padding: 2px 4px;
+      border-radius: 3px;
+      color: #333;
+    }
+
+    /* Scroll to post animation */
+    .scroll-to-post {
+      scroll-margin-top: 100px;
+    }
+
+    /* Rest of your CSS styles... */
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Emergency Health Blog</h1>
+    <button id="loginBtn" class="btn login-top">Login</button>
+  </header>
+
+  <main class="main-content">
+    <div class="intro">
+      <h2>🩺 Emergency Health Blog</h2>
+      <p>Share life-saving health information, raise SOS alerts, and connect with others. Sign in to access all features!</p>
+
+      <div class="middle-actions">
+        <div class="search-container">
+          <label for="search-input">Search</label>
+          <input type="text" id="search-input" placeholder="Search posts...">
+          <button class="btn search-btn action-btn">Go</button>
+        </div>
+
+        <button class="btn create-btn action-btn">Create Post</button>
+        <button class="btn sos-btn action-btn">SOS</button>
+        <button class="btn feedback-btn action-btn">Feedback</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Login message when not logged in -->
+  <div class="login-message" id="loginMessage">
+    <h2>🔐 Please Login to View Posts</h2>
+    <p>You need to be logged in to view and interact with community posts.</p>
+    <button class="btn login-btn-message" onclick="document.getElementById('loginModal').style.display='flex'">Login Now</button>
+  </div>
+
+  <!-- Posts section - only visible when logged in -->
+  <div class="posts-header" id="postsHeader">
+    <h2>📝 Community Posts</h2>
+    <div class="sorting-options">
+      <button class="sort-btn active" data-sort="newest">Newest First</button>
+      <button class="sort-btn" data-sort="oldest">Oldest First</button>
+    </div>
+  </div>
+
+  <div id="posts-container"></div>
+  
+  <div class="view-more-container" id="viewMoreContainer">
+    <button class="view-more-btn" id="view-more-btn">View More Posts</button>
+  </div>
+  
+  <section class="feedback-slider-section">
+    <h2>User Feedback</h2>
+    <div class="feedback-slider-container">
+      <div class="feedback-slider" id="feedback-slider"></div>
+      <div class="slider-controls">
+        <button class="slider-btn" id="prev-btn">‹ Previous</button>
+        <button class="slider-btn" id="next-btn">Next ›</button>
+      </div>
+      <div class="slider-dots" id="slider-dots"></div>
+    </div>
+  </section>
+
+  <!-- All your modals remain the same -->
+  <div class="modal" id="loginModal">
+    <div class="modal-content">
+      <h2>🔐 Login</h2>
+      <input type="text" placeholder="Username" required>
+      <input type="password" placeholder="Password" required>
+      <div class="remember-line">
+        <span>Remember me</span>
+        <input type="checkbox">
+      </div>
+      <button class="btn login-btn">Login</button>
+      <p>New here? <a href="#" id="signupLink">Sign Up</a></p>
+    </div>
+  </div>
+
+  <div class="modal" id="signupModal">
+    <div class="modal-content">
+      <h2>🩷 Sign Up</h2>
+      <input type="text" placeholder="Create Username" required>
+      <input type="password" placeholder="Create Password" required>
+      <button class="btn signup-btn">Sign Up</button>
+      <p>Already have an account? <a href="#" id="loginLink">Login</a></p>
+    </div>
+  </div>
+
+  <div class="modal" id="createPostModal">
+    <div class="modal-content">
+      <h2>📝 Create Post</h2>
+      <input type="text" id="post-title" placeholder="Post Title" required>
+      <textarea id="post-content" placeholder="Post Content" rows="6" required></textarea>
+      <button class="btn" id="submit-post-btn">Submit Post</button>
+    </div>
+  </div>
+
+  <div class="modal" id="feedbackModal">
+    <div class="modal-content">
+      <h2>⭐ Submit Feedback</h2>
+      <div class="photo-upload-container">
+        <div class="photo-preview" id="photo-preview">
+          <div class="upload-placeholder">
+            <span class="upload-icon">📷</span>
+            Add Photo
+          </div>
+        </div>
+        <input type="file" id="photo-upload" accept="image/*">
+        <label for="photo-upload" class="upload-btn">Choose Photo</label>
+      </div>
+      <textarea id="feedback-text" placeholder="Write your feedback..." rows="5"></textarea>
+      <div class="rating-section">
+        <span class="rating-label">Rate your experience:</span>
+        <div class="rating-stars">
+          <span data-value="1">★</span>
+          <span data-value="2">★</span>
+          <span data-value="3">★</span>
+          <span data-value="4">★</span>
+          <span data-value="5">★</span>
+        </div>
+        <div class="rating-value" id="rating-value">5 out of 5 stars</div>
+      </div>
+      <button class="btn" id="submit-feedback-btn">Submit Feedback</button>
+    </div>
+  </div>
+
+  <script>
+    // Your existing JavaScript variables
+    const loginBtn = document.getElementById('loginBtn');
+    const loginModal = document.getElementById('loginModal');
+    const signupModal = document.getElementById('signupModal');
+    const signupLink = document.getElementById('signupLink');
+    const loginLink = document.getElementById('loginLink');
+    const loginButton = document.querySelector('.login-btn');
+    const signupButton = document.querySelector('.signup-btn');
+    const actionBtns = document.querySelectorAll('.action-btn');
+    const createBtn = document.querySelector('.create-btn');
+    const createPostModal = document.getElementById('createPostModal');
+    const submitPostBtn = document.getElementById('submit-post-btn');
+    const postsContainer = document.getElementById('posts-container');
+    const sortButtons = document.querySelectorAll('.sort-btn');
+    const viewMoreBtn = document.getElementById('view-more-btn');
+    const feedbackBtn = document.querySelector('.feedback-btn');
+    const feedbackModal = document.getElementById('feedbackModal');
+    const submitFeedbackBtn = document.getElementById('submit-feedback-btn');
+    const feedbackText = document.getElementById('feedback-text');
+    const ratingStars = document.querySelectorAll('.rating-stars span');
+    const ratingValue = document.getElementById('rating-value');
+    const photoUpload = document.getElementById('photo-upload');
+    const photoPreview = document.getElementById('photo-preview');
+    const feedbackSlider = document.getElementById('feedback-slider');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const sliderDots = document.getElementById('slider-dots');
+    const loginMessage = document.getElementById('loginMessage');
+    const postsHeader = document.getElementById('postsHeader');
+    const viewMoreContainer = document.getElementById('viewMoreContainer');
+
+    let isLoggedIn = false;
+    let currentUser = "";
+    let selectedRating = 5;
+    let currentSlide = 0;
+    let feedbackData = [];
+    let uploadedPhoto = null;
+    let currentSort = 'newest';
+    let allPosts = [];
+    let showAllPosts = false;
+    const POSTS_PER_PAGE = 6;
+
+    // Toggle visibility based on login status
+    function togglePostVisibility() {
+      if (isLoggedIn) {
+        loginMessage.classList.remove('visible');
+        postsHeader.classList.add('visible');
+        postsContainer.classList.add('visible');
+        viewMoreContainer.classList.add('visible');
+      } else {
+        loginMessage.classList.add('visible');
+        postsHeader.classList.remove('visible');
+        postsContainer.classList.remove('visible');
+        viewMoreContainer.classList.remove('visible');
+      }
+    }
+
+    // Store posts in localStorage for persistence
+    function savePostsToStorage() {
+      localStorage.setItem('blogPosts', JSON.stringify(allPosts));
+    }
+
+    function loadPostsFromStorage() {
+      const savedPosts = localStorage.getItem('blogPosts');
+      if (savedPosts) {
+        allPosts = JSON.parse(savedPosts);
+      }
+    }
+
+    // SIMPLE AND RELIABLE DATE FORMATTING
+    function formatPostDate(timestamp) {
+      try {
+        const date = new Date(timestamp);
+        if (isNaN(date.getTime())) {
+          return 'Invalid Date';
+        }
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch (error) {
+        return 'Date Error';
+      }
+    }
+
+    // Get initials from username
+    function getInitials(username) {
+      return username.split(' ').map(name => name[0]).join('').toUpperCase();
+    }
+
+    // Highlight text in search results
+    function highlightText(text, searchTerm) {
+      if (!searchTerm) return text;
+      
+      const regex = new RegExp(`(${searchTerm})`, 'gi');
+      return text.replace(regex, '<span class="search-highlight">$1</span>');
+    }
+
+    // Scroll to and highlight a post
+    function scrollToPost(postElement) {
+      // Remove any existing highlights
+      document.querySelectorAll('.post-card.highlight').forEach(card => {
+        card.classList.remove('highlight');
+      });
+      
+      // Add highlight class to the target post
+      postElement.classList.add('highlight');
+      postElement.classList.add('scroll-to-post');
+      
+      // Scroll to the post
+      postElement.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+      
+      // Remove highlight after animation
+      setTimeout(() => {
+        postElement.classList.remove('highlight');
+      }, 2000);
+    }
+
+    // FIXED: PROPER SORTING FUNCTION
+    function sortPosts(posts, sortType) {
+      console.log(`Sorting ${posts.length} posts by: ${sortType}`);
+      
+      const sortedPosts = [...posts];
+      
+      sortedPosts.sort((a, b) => {
+        // Use the actual timestamp field that we're storing
+        const timeA = a.timestamp;
+        const timeB = b.timestamp;
+        
+        console.log(`Comparing: A=${timeA}, B=${timeB}`);
+        
+        const dateA = new Date(timeA);
+        const dateB = new Date(timeB);
+        
+        if (sortType === 'newest') {
+          // Newest first: b - a (descending)
+          return dateB.getTime() - dateA.getTime();
+        } else {
+          // Oldest first: a - b (ascending)
+          return dateA.getTime() - dateB.getTime();
+        }
+      });
+      
+      console.log('Sorted posts:', sortedPosts.map(p => ({ title: p.title, timestamp: p.timestamp })));
+      return sortedPosts;
+    }
+
+    // Get posts to display (limited or all)
+    function getPostsToDisplay() {
+      if (showAllPosts) {
+        return allPosts;
+      } else {
+        return allPosts.slice(0, POSTS_PER_PAGE);
+      }
+    }
+
+    // Update view more button visibility
+    function updateViewMoreButton() {
+      if (allPosts.length <= POSTS_PER_PAGE) {
+        viewMoreBtn.classList.add('hidden');
+      } else {
+        viewMoreBtn.classList.remove('hidden');
+        if (showAllPosts) {
+          viewMoreBtn.textContent = 'Show Less';
+        } else {
+          viewMoreBtn.textContent = `View More Posts (${allPosts.length - POSTS_PER_PAGE} more)`;
+        }
+      }
+    }
+
+    // Display posts function
+    function displayPosts(searchTerm = '') {
+      postsContainer.innerHTML = '';
+      const postsToDisplay = getPostsToDisplay();
+      
+      if (postsToDisplay.length === 0) {
+        postsContainer.innerHTML = `
+          <div class="post-card" style="grid-column: 1 / -1; text-align: center; background: linear-gradient(135deg, #98FF98, #A7FFA7);">
+            <h3>No posts yet</h3>
+            <p>Be the first to create a post!</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Apply sorting
+      const sortedPosts = sortPosts(postsToDisplay, currentSort);
+      
+      console.log(`Displaying ${sortedPosts.length} posts sorted by ${currentSort}`);
+      
+      sortedPosts.forEach((post, index) => {
+        const div = document.createElement('div');
+        div.className = 'post-card';
+        div.id = `post-${index}`;
+        
+        const formattedDate = formatPostDate(post.timestamp);
+        
+        // Highlight search terms in title and content
+        const highlightedTitle = searchTerm ? highlightText(post.title, searchTerm) : post.title;
+        const highlightedContent = searchTerm ? highlightText(post.content, searchTerm) : post.content;
+        
+        div.innerHTML = `
+          <h3>${highlightedTitle}</h3>
+          <p>${highlightedContent}</p>
+          <div class="post-meta">
+            <small class="post-author">By ${post.author}</small>
+            <small class="post-date">${formattedDate}</small>
+          </div>
+        `;
+        postsContainer.appendChild(div);
+      });
+      
+      updateViewMoreButton();
+    }
+
+    // Search posts function
+    function searchPosts() {
+      const searchTerm = document.getElementById('search-input').value.trim().toLowerCase();
+      
+      if (!searchTerm) {
+        // If no search term, show all posts normally
+        showAllPosts = false;
+        displayPosts();
+        return;
+      }
+      
+      // Filter posts based on search term
+      const filteredPosts = allPosts.filter(post => 
+        post.title.toLowerCase().includes(searchTerm) || 
+        post.content.toLowerCase().includes(searchTerm) ||
+        post.author.toLowerCase().includes(searchTerm)
+      );
+      
+      if (filteredPosts.length === 0) {
+        postsContainer.innerHTML = `
+          <div class="post-card" style="grid-column: 1 / -1; text-align: center; background: linear-gradient(135deg, #98FF98, #A7FFA7);">
+            <h3>No posts found</h3>
+            <p>No posts match your search for "${searchTerm}"</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Show all filtered posts
+      const tempPosts = allPosts;
+      allPosts = filteredPosts;
+      showAllPosts = true;
+      displayPosts(searchTerm);
+      allPosts = tempPosts;
+      
+      // Scroll to the first matching post
+      setTimeout(() => {
+        const firstPost = document.querySelector('.post-card');
+        if (firstPost) {
+          scrollToPost(firstPost);
+        }
+      }, 500);
+    }
+
+    // View More button functionality
+    viewMoreBtn.addEventListener('click', () => {
+      showAllPosts = !showAllPosts;
+      displayPosts();
+    });
+
+    // FIXED: PROPER SORTING EVENT HANDLERS
+    sortButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Remove active class from all buttons
+        sortButtons.forEach(b => b.classList.remove('active'));
+        // Add active class to clicked button
+        btn.classList.add('active');
+        // Update current sort
+        currentSort = btn.dataset.sort;
+        console.log(`Sort changed to: ${currentSort}`);
+        // Re-display posts with new sorting
+        displayPosts();
+      });
+    });
+
+    // Search when Enter key is pressed
+    document.getElementById('search-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        searchPosts();
+      }
+    });
+
+    // Your existing event handlers and functions...
+    loginBtn.onclick = () => {
+      if (isLoggedIn) {
+        isLoggedIn = false; 
+        currentUser = "";
+        alert("Logged out successfully!");
+        loginBtn.innerText = "Login";
+        togglePostVisibility();
+      } else {
+        loginModal.style.display = 'flex';
+      }
+    };
+
+    signupLink.onclick = e => { e.preventDefault(); loginModal.style.display='none'; signupModal.style.display='flex'; };
+    loginLink.onclick = e => { e.preventDefault(); signupModal.style.display='none'; loginModal.style.display='flex'; };
+    
+    window.onclick = e => { 
+      if([loginModal, signupModal, createPostModal, feedbackModal].includes(e.target)) {
+        e.target.style.display='none';
+      }
+    };
+
+    signupButton.onclick = async () => {
+      const inputs = signupModal.querySelectorAll("input");
+      const username = inputs[0].value.trim();
+      const password = inputs[1].value.trim();
+      if(!username||!password) return alert("Please fill all fields");
+
+      try {
+        const res = await fetch("/signup", { 
+          method:"POST", 
+          headers:{"Content-Type":"application/json"}, 
+          body:JSON.stringify({username,password}) 
+        });
+        const data = await res.json();
+        alert(data.message);
+        if(data.status==="success"){ 
+          signupModal.style.display='none'; 
+          loginModal.style.display='flex'; 
+        }
+      } catch (error) {
+        alert("Signup failed. Using demo mode.");
+        // Demo mode - simulate successful signup
+        signupModal.style.display='none'; 
+        loginModal.style.display='flex';
+      }
+    };
+
+    loginButton.onclick = async () => {
+      const inputs = loginModal.querySelectorAll("input");
+      const username = inputs[0].value.trim();
+      const password = inputs[1].value.trim();
+      if(!username||!password) return alert("Please fill all fields");
+
+      try {
+        const res = await fetch("/login", { 
+          method:"POST", 
+          headers:{"Content-Type":"application/json"}, 
+          body:JSON.stringify({username,password}) 
+        });
+        const data = await res.json();
+        alert(data.message);
+        if(data.status==="success"){
+          isLoggedIn=true; 
+          currentUser=username;
+          loginModal.style.display='none'; 
+          loginBtn.innerText="Logout";
+          togglePostVisibility();
+          loadPostsFromStorage();
+          displayPosts();
+          fetchFeedback();
+        }
+      } catch (error) {
+        alert("Login failed. Using demo mode.");
+        // Demo mode - simulate successful login
+        isLoggedIn=true; 
+        currentUser=username;
+        loginModal.style.display='none'; 
+        loginBtn.innerText="Logout";
+        togglePostVisibility();
+        loadPostsFromStorage();
+        displayPosts();
+      }
+    };
+
+    actionBtns.forEach(btn=>btn.addEventListener('click',()=>{
+      if(!isLoggedIn) loginModal.style.display='flex';
+    }));
+
+    createBtn.onclick = ()=>{ 
+      if(isLoggedIn) createPostModal.style.display='flex'; 
+      else loginModal.style.display='flex'; 
+    };
+    
+    submitPostBtn.onclick = async ()=>{
+      const title = document.getElementById('post-title').value.trim();
+      const content = document.getElementById('post-content').value.trim();
+      if(!title||!content) return alert("Please fill all fields");
+      
+      // Create a proper timestamp
+      const timestamp = new Date().toISOString();
+      console.log('Creating post with timestamp:', timestamp);
+      
+      const newPost = {
+        title,
+        content,
+        author: currentUser,
+        timestamp: timestamp
+      };
+      
+      try {
+        const res = await fetch("/create_post", { 
+          method:"POST", 
+          headers:{"Content-Type":"application/json"}, 
+          body:JSON.stringify(newPost) 
+        });
+        const data = await res.json();
+        alert(data.message);
+        if(data.status==="success"){
+          // Add to local array and save to storage
+          allPosts.unshift(newPost); // Add to beginning for newest first
+          savePostsToStorage();
+          createPostModal.style.display='none';
+          document.getElementById('post-title').value='';
+          document.getElementById('post-content').value='';
+          displayPosts();
+        }
+      } catch (error) {
+        alert("Post creation failed. Saving locally.");
+        // Demo mode - save locally
+        allPosts.unshift(newPost);
+        savePostsToStorage();
+        createPostModal.style.display='none';
+        document.getElementById('post-title').value='';
+        document.getElementById('post-content').value='';
+        displayPosts();
+      }
+    };
+
+    document.querySelector('.search-btn').onclick = searchPosts;
+    
+    // Initialize with some sample posts if none exist
+    function initializeSamplePosts() {
+      if (allPosts.length === 0) {
+        const samplePosts = [
+          {
+            title: "Welcome to Emergency Health Blog",
+            content: "This is a community platform for sharing health information and emergency tips. Feel free to create your own posts!",
+            author: "Admin",
+            timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() // 2 days ago
+          },
+          {
+            title: "First Aid Basics Everyone Should Know",
+            content: "Remember the basic first aid principles: Check the scene, Call for help, and Care for the person. Always prioritize safety!",
+            author: "Health Expert",
+            timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() // 1 day ago
+          },
+          {
+            title: "Emergency Contacts Preparation",
+            content: "Always keep emergency contacts handy and know your location. Save local emergency numbers in your phone.",
+            author: "Safety Guide",
+            timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString() // 12 hours ago
+          }
+        ];
+        allPosts = samplePosts;
+        savePostsToStorage();
+        displayPosts();
+      }
+    }
+
+    // Load posts when page loads
+    loadPostsFromStorage();
+    if (allPosts.length === 0) {
+      initializeSamplePosts();
+    }
+
+    // Initialize visibility
+    togglePostVisibility();
+
+    // Rest of your JavaScript functions remain the same...
+    feedbackBtn.onclick = ()=>{ if(isLoggedIn) feedbackModal.style.display='flex'; else loginModal.style.display='flex'; };
+
+    photoUpload.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            uploadedPhoto = e.target.result;
+            photoPreview.innerHTML = `<img src="${uploadedPhoto}" alt="Preview">`;
+          };
+          reader.readAsDataURL(file);
+        } else {
+          alert('Please select an image file.');
+          photoUpload.value = '';
+        }
+      }
+    });
+
+    ratingStars.forEach(star=>{
+      star.addEventListener('click', ()=>{
+        selectedRating = parseInt(star.dataset.value);
+        updateRatingDisplay();
+      });
+    });
+
+    function updateRatingDisplay() {
+      ratingStars.forEach((star, index) => {
+        if (index < selectedRating) {
+          star.style.color = '#ffcc00';
+        } else {
+          star.style.color = '#fff';
+        }
+      });
+      ratingValue.textContent = `${selectedRating} out of 5 stars`;
+    }
+
+    updateRatingDisplay();
+
+    submitFeedbackBtn.onclick = async ()=>{
+      const feedback = feedbackText.value.trim();
+      if(!feedback) return alert("Please write feedback!");
+      
+      try {
+        const res = await fetch("/add_feedback", { 
+          method:"POST", 
+          headers:{"Content-Type":"application/json"}, 
+          body:JSON.stringify({
+            username:currentUser,
+            feedback, 
+            rating:selectedRating,
+            photo: uploadedPhoto
+          }) 
+        });
+        const data = await res.json();
+        alert(data.message);
+        if(data.status==="success"){
+          feedbackModal.style.display='none'; 
+          feedbackText.value=''; 
+          selectedRating=5;
+          uploadedPhoto = null;
+          photoPreview.innerHTML = `
+            <div class="upload-placeholder">
+              <span class="upload-icon">📷</span>
+              Add Photo
+            </div>
+          `;
+          photoUpload.value = '';
+          updateRatingDisplay();
+          fetchFeedback();
+        }
+      } catch (error) {
+        alert("Feedback submission failed.");
+      }
+    };
+
+    async function fetchFeedback(){
+      try {
+        const res = await fetch("/get_feedback");
+        feedbackData = await res.json();
+        updateFeedbackSlider();
+      } catch (error) {
+        console.log("Feedback fetch failed");
+      }
+    }
+
+    function updateFeedbackSlider() {
+      feedbackSlider.innerHTML = '';
+      sliderDots.innerHTML = '';
+      
+      if (feedbackData.length === 0) {
+        feedbackSlider.innerHTML = `
+          <div class="feedback-slide">
+            <div class="feedback-item">
+              <p>No feedback available yet. Be the first to share your experience!</p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+      
+      feedbackData.forEach((feedback, index) => {
+        const slide = document.createElement('div');
+        slide.className = 'feedback-slide';
+        
+        const initials = getInitials(feedback.username);
+        
+        slide.innerHTML = `
+          <div class="feedback-item">
+            <div class="feedback-initials">${initials}</div>
+            <div class="feedback-name">${feedback.username}</div>
+            <p class="feedback-text">${feedback.feedback}</p>
+            <div class="feedback-rating">${'★'.repeat(feedback.rating)}${'☆'.repeat(5 - feedback.rating)}</div>
+            ${index < feedbackData.length - 1 ? '<div class="divider"></div>' : ''}
+          </div>
+        `;
+        feedbackSlider.appendChild(slide);
+        
+        const dot = document.createElement('div');
+        dot.className = 'slider-dot';
+        if (index === currentSlide) dot.classList.add('active');
+        dot.addEventListener('click', () => {
+          currentSlide = index;
+          updateSliderPosition();
+        });
+        sliderDots.appendChild(dot);
+      });
+      
+      updateSliderPosition();
+    }
+    
+    function updateSliderPosition() {
+      feedbackSlider.style.transform = `translateX(-${currentSlide * 100}%)`;
+      
+      document.querySelectorAll('.slider-dot').forEach((dot, index) => {
+        if (index === currentSlide) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+      });
+    }
+    
+    prevBtn.addEventListener('click', () => {
+      if (feedbackData.length === 0) return;
+      currentSlide = (currentSlide - 1 + feedbackData.length) % feedbackData.length;
+      updateSliderPosition();
+    });
+    
+    nextBtn.addEventListener('click', () => {
+      if (feedbackData.length === 0) return;
+      currentSlide = (currentSlide + 1) % feedbackData.length;
+      updateSliderPosition();
+    });
+
+    const sosBtn = document.querySelector('.sos-btn');
+    sosBtn.addEventListener('click', async () => {
+      if (!isLoggedIn) {
+        alert("Please log in before using SOS.");
+        return;
+      }
+
+      if (!confirm("⚠️ Are you sure you want to send an SOS alert?")) return;
+
+      try {
+        const res = await fetch("/sos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: currentUser })
+        });
+
+        const data = await res.json();
+        alert(data.message || "SOS alert sent!");
+      } catch (err) {
+        console.error("SOS error:", err);
+        alert("Failed to send SOS alert.");
+      }
+    });
+
+    for(let i=0;i<5;i++) ratingStars[i].style.color='#ffcc00';
+  </script>
+</body>
+</html>
